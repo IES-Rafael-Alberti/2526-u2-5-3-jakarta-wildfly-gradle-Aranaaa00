@@ -1,0 +1,36 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - backend
+    restart: unless-stopped
+    mem_limit: 256m
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    expose:
+      - "8080"
+    volumes:
+      - ./logs/wildfly:/opt/jboss/wildfly/standalone/log
+    restart: unless-stopped
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/tasks/api/tasks"]
+      interval: 30s
+      retries: 3
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
